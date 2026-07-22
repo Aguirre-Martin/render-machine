@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { BuildModules } from "@/data/mockData";
 
 const ModelViewer = dynamic(() => import("@/components/ModelViewer"), {
   ssr: false,
@@ -16,6 +17,22 @@ const ModelViewer = dynamic(() => import("@/components/ModelViewer"), {
   ),
 });
 
-export default function ModelViewerClient() {
-  return <ModelViewer />;
+type ModelViewerClientProps = {
+  chassisId: string;
+  finishId: string;
+  modules: BuildModules;
+};
+
+export default function ModelViewerClient({
+  chassisId,
+  finishId,
+  modules,
+}: ModelViewerClientProps) {
+  return (
+    <ModelViewer
+      chassisId={chassisId}
+      finishId={finishId}
+      modules={modules}
+    />
+  );
 }

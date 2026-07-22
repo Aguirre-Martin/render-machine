@@ -2,13 +2,13 @@
 
 import { AlertTriangle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { MachineConfig } from "@/data/mockData";
+import type { ActiveMedia } from "@/data/mockData";
 
 type VideoPlayerProps = {
-  config: MachineConfig;
+  media: ActiveMedia;
 };
 
-export default function VideoPlayer({ config }: VideoPlayerProps) {
+export default function VideoPlayer({ media }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [visible, setVisible] = useState(false);
   const [buffering, setBuffering] = useState(true);
@@ -32,7 +32,7 @@ export default function VideoPlayer({ config }: VideoPlayerProps) {
       window.clearTimeout(fadeInTimer);
       window.clearTimeout(failSafe);
     };
-  }, [config.videoUrl]);
+  }, [media.videoUrl]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -41,7 +41,7 @@ export default function VideoPlayer({ config }: VideoPlayerProps) {
     void video.play().catch(() => {
       // muted + playsInline should allow autoplay; ignore policy blocks
     });
-  }, [config.videoUrl]);
+  }, [media.videoUrl]);
 
   return (
     <div className="space-y-3">
@@ -57,15 +57,15 @@ export default function VideoPlayer({ config }: VideoPlayerProps) {
             <AlertTriangle className="h-5 w-5 text-amber-300" strokeWidth={1.75} />
             <p className="text-sm text-slate-300">No se pudo cargar el preview</p>
             <p className="font-mono text-[10px] text-slate-500 break-all">
-              {config.videoUrl}
+              {media.videoUrl}
             </p>
           </div>
         )}
 
         <video
-          key={config.id}
+          key={media.id}
           ref={videoRef}
-          src={config.videoUrl}
+          src={media.videoUrl}
           className={`h-full w-full object-cover transition-opacity duration-500 ease-out ${
             visible && !failed ? "opacity-100" : "opacity-0"
           }`}
@@ -92,17 +92,17 @@ export default function VideoPlayer({ config }: VideoPlayerProps) {
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent p-3 pt-10">
           <p className="font-mono text-[10px] tracking-widest text-cyan-300/90 uppercase">
-            Preview técnico · {config.tag}
+            Preview técnico · {media.tag}
           </p>
         </div>
       </div>
 
       <div>
         <h2 className="text-base font-semibold tracking-tight text-slate-100 sm:text-lg">
-          {config.title}
+          {media.title}
         </h2>
         <p className="mt-1 text-sm leading-relaxed text-slate-400">
-          {config.description}
+          {media.description}
         </p>
       </div>
     </div>

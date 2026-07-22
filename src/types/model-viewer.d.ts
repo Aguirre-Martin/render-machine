@@ -18,6 +18,7 @@ type ModelViewerProps = DetailedHTMLProps<
   exposure?: string | number;
   "environment-image"?: string;
   "interaction-prompt"?: "auto" | "when-focused" | "none";
+  children?: React.ReactNode;
 };
 
 declare module "react" {

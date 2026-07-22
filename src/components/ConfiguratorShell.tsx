@@ -1,7 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MACHINE_CONFIGS } from "@/data/mockData";
+import {
+  DEFAULT_BUILD,
+  buildBomLines,
+  formatBuildSummary,
+  resolveActiveMedia,
+  type BuildConfig,
+  type BuildModules,
+  type BuildStep,
+} from "@/data/mockData";
 import ControlPanel from "@/components/ControlPanel";
 import Header from "@/components/Header";
 import ModelViewerClient from "@/components/ModelViewerClient";
@@ -9,15 +17,47 @@ import QuoteCta from "@/components/QuoteCta";
 import VideoPlayer from "@/components/VideoPlayer";
 
 export default function ConfiguratorShell() {
-  const [selectedId, setSelectedId] = useState(MACHINE_CONFIGS[0].id);
+  const [build, setBuild] = useState<BuildConfig>(DEFAULT_BUILD);
   const [quoteOpen, setQuoteOpen] = useState(false);
 
-  const selected = useMemo(
-    () =>
-      MACHINE_CONFIGS.find((item) => item.id === selectedId) ??
-      MACHINE_CONFIGS[0],
-    [selectedId],
+  const media = useMemo(() => resolveActiveMedia(build), [build]);
+  const summary = useMemo(() => formatBuildSummary(build), [build]);
+  const bomLines = useMemo(
+    () => buildBomLines(build).map((line) => line.label),
+    [build],
   );
+
+  function setStep(activeStep: BuildStep) {
+    setBuild((prev) => ({ ...prev, activeStep }));
+  }
+
+  function selectChassis(chassisId: string) {
+    setBuild((prev) => ({
+      ...prev,
+      chassisId,
+      activeMediaId: chassisId,
+    }));
+  }
+
+  function selectFinish(finishId: string) {
+    setBuild((prev) => ({
+      ...prev,
+      finishId,
+      activeMediaId: finishId,
+    }));
+  }
+
+  function toggleModule(id: keyof BuildModules) {
+    setBuild((prev) => {
+      const nextValue = !prev.modules[id];
+      return {
+        ...prev,
+        modules: { ...prev.modules, [id]: nextValue },
+        // Preview the module video when enabling; keep current media when disabling
+        activeMediaId: nextValue ? id : prev.activeMediaId,
+      };
+    });
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
@@ -29,7 +69,7 @@ export default function ConfiguratorShell() {
             Showroom B2B · Configurador interactivo
           </p>
           <h1 className="text-xl font-semibold tracking-tight text-slate-50 sm:text-2xl">
-            Seleccioná módulos técnicos y visualizá el sistema en tiempo real
+            Armá tu configuración y visualizá el sistema en tiempo real
           </h1>
         </div>
 
@@ -44,23 +84,30 @@ export default function ConfiguratorShell() {
               </span>
             </div>
             <div className="min-h-0 flex-1">
-              <ModelViewerClient />
+              <ModelViewerClient
+                chassisId={build.chassisId}
+                finishId={build.finishId}
+                modules={build.modules}
+              />
             </div>
           </section>
 
           <section className="flex flex-col gap-5 lg:col-span-2">
-            <VideoPlayer config={selected} />
+            <VideoPlayer media={media} />
             <ControlPanel
-              configs={MACHINE_CONFIGS}
-              selectedId={selected.id}
-              onSelect={setSelectedId}
+              build={build}
+              onStepChange={setStep}
+              onChassisSelect={selectChassis}
+              onFinishSelect={selectFinish}
+              onModuleToggle={toggleModule}
             />
           </section>
         </div>
       </main>
 
       <QuoteCta
-        selected={selected}
+        summary={summary}
+        bomLines={bomLines}
         open={quoteOpen}
         onOpen={() => setQuoteOpen(true)}
         onClose={() => setQuoteOpen(false)}
