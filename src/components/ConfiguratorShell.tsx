@@ -106,7 +106,7 @@ export default function ConfiguratorShell() {
       <main className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
         <div className="flex flex-col gap-1 border-b border-slate-800/80 pb-3">
           <p className="font-mono text-[11px] tracking-[0.2em] text-cyan-400/80 uppercase">
-            Showroom B2B · Configurador interactivo
+            Showroom · Configurador interactivo
           </p>
           <h1 className="text-xl font-semibold tracking-tight text-slate-50 sm:text-2xl">
             Monta tu configuración y visualiza el sistema en tiempo real
