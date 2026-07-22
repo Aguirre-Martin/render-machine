@@ -59,7 +59,8 @@ export type AddonOption = {
   /**
    * Named material in the multi-part demo GLB (machine-demo.glb) that this addon
    * mounts. The viewer shows/hides it by toggling that material's alpha — no
-   * model reload, no tint of the body. Empty until an addon maps to a mesh.
+   * model reload. Housing metal engama with chassis/finish; IR lens
+   * (part_*_eye) stays factory-locked. Empty until an addon maps to a mesh.
    */
   partMaterial?: string;
   /**
@@ -244,8 +245,8 @@ export const ADDON_OPTIONS: AddonOption[] = [
     compatibleWith: ["Chasis estándar", "Kit mate / metálico"],
     detailBullets: [
       "Anclaje slot_rail_L — pivot en el punto de montaje",
+      "Metal engama con chasis y acabado seleccionados",
       "Soporta clamp M4 / payload liviano",
-      "Geometría 3D pendiente de asset del cliente",
     ],
   },
   {
@@ -259,8 +260,9 @@ export const ADDON_OPTIONS: AddonOption[] = [
     compatibleWith: ["Visión Térmica", "Chasis estándar"],
     detailBullets: [
       "Anclaje slot_visor — mesh addon_thermal_pod",
+      "Pod IR completo de fábrica (tubo negro + lente) — no se engama",
+      "Pupila infrarroja roja intensa — detalle de marca",
       "FOV corto / disipación pasiva",
-      "Geometría 3D pendiente de asset del cliente",
     ],
   },
   {
@@ -275,8 +277,8 @@ export const ADDON_OPTIONS: AddonOption[] = [
     blockedByModules: ["lidar"],
     detailBullets: [
       "Montaje lateral — slot_antenna en costado del casco",
+      "Metal engama con chasis y acabado seleccionados",
       "Bloqueada si LIDAR está activo (regla demo)",
-      "Geometría 3D pendiente de asset del cliente",
     ],
   },
 ];
@@ -349,12 +351,12 @@ export function getAddonBlockReason(
 }
 
 /**
- * GLB src for the viewer. The multi-part demo machine is used only in the
- * addons step (so pieces can toggle); earlier steps keep the base hero model.
- * Toggling parts within the step does NOT change src, so no reload.
+ * GLB src for the viewer. Always the multi-part local demo so chassis → addons
+ * never swaps models (no CDN reload, no factory-color flash on part_*).
+ * Inactive addons stay at alpha 0 until mounted.
  */
-export function resolveModelSrc(build: BuildConfig): string {
-  return build.activeStep === "addons" ? MACHINE_DEMO_SRC : MODEL_SRC;
+export function resolveModelSrc(_build: BuildConfig): string {
+  return MACHINE_DEMO_SRC;
 }
 
 /** Resolve which video/title to show from activeMediaId. */

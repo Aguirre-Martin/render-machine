@@ -23,4 +23,4 @@ Mirror: wizard steps, tray cards with selected state, Volver/Siguiente, live sum
 - Addons = geometry step (max 1); keep base helmet — never swap hero for unrelated stand-in GLBs
 - No prices in UI for now; no real PDF
 - No new dependencies unless asked
-- Do not treat agregados as another material tint
+- Do not treat agregados as another paint step in the wizard; rail/antenna metal follows chassis/finish; entire Pod IR tube stays factory-locked (black + hot IR red)
