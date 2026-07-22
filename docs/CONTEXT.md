@@ -50,10 +50,11 @@ DamagedHelmet = single material demo stand-in. Clear albedo texture, tint `mater
 
 ## Agregados (Paso 4)
 
-Geometry addons (rail / pod IR / antenna) — **not** another tint, and **not** swapping the whole hero model for a random GLB.
+Geometry addons (rail / pod IR / antenna) — **not** a paint step in the wizard, and **not** swapping the whole hero model for a random GLB.
 - UI: wizard step + cards + in-panel detail drawer
 - Rules: max 1 addon; e.g. LIDAR blocks Antena X
-- Today: selection updates video / summary / BOM; 3D hero stays DamagedHelmet
+- **Color rule:** metal housings (`part_rail` / `part_antenna`) engaman with chassis + finish. The whole Pod IR (`part_pod` tube + `part_pod_glass` + `part_pod_eye`) is **factory-locked** — matte black tube + hot infrared red pupil; never retint.
+- Today: multi-part demo GLB for all steps; selection toggles part_* meshes + video / summary / BOM. Same src throughout — no model swap when entering Agregados.
 - Real 3D attach later: client GLB with slots, prebaked casco+add, or R3F composition
 
 ## Key files

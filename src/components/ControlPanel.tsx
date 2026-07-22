@@ -237,7 +237,7 @@ export default function ControlPanel({
         {build.activeStep === "addons" && (
           <div className="flex h-full flex-col gap-2">
             <p className="shrink-0 text-xs text-slate-400">
-              Monta una pieza — 3D + video técnico.
+              Monta una pieza — metal engama con chasis/acabado; el lente IR queda de fábrica.
             </p>
             <ul className="grid min-h-0 flex-1 grid-cols-3 gap-1.5">
               {ADDON_OPTIONS.map((option) => (

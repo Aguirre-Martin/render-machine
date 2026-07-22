@@ -15,7 +15,7 @@ type ModelViewerProps = {
   chassisId: string;
   finishId: string;
   modules: BuildModules;
-  /** Resolved GLB URL — swaps to the multi-part demo machine in the addons step */
+  /** Resolved GLB URL — local multi-part demo (stable across steps) */
   modelSrc: string;
   /** Mounted addons keyed by id — drive part show/hide via material alpha */
   parts: Record<string, boolean>;
@@ -105,9 +105,52 @@ function WebGLFallback() {
 }
 
 /**
- * Tint chassis / finish / module cues on every material.
+ * Factory-locked Pod IR — entire tube + black glass + hot IR pupil.
+ * Never engamado with chassis/finish (brand optic stays black + infrared red).
+ */
+const FACTORY_IR: Record<
+  string,
+  {
+    base: [number, number, number];
+    emissive: [number, number, number];
+    metallic: number;
+    roughness: number;
+  }
+> = {
+  // Full telescopic barrel — matte black factory housing
+  part_pod: {
+    base: [0.05, 0.05, 0.055],
+    emissive: [0, 0, 0],
+    metallic: 0.72,
+    roughness: 0.42,
+  },
+  part_pod_glass: {
+    base: [0.03, 0.03, 0.035],
+    emissive: [0.02, 0.0, 0.0],
+    metallic: 0.1,
+    roughness: 0.14,
+  },
+  // Hot infrared pupil — push pure red, not amber/magenta wash
+  part_pod_eye: {
+    base: [0.12, 0.0, 0.01],
+    emissive: [1.0, 0.02, 0.03],
+    metallic: 0.02,
+    roughness: 0.18,
+  },
+};
+
+/** Whole Pod IR assembly (tube + glass + eye) is brand-locked. */
+function isFactoryLockedPart(name: string): boolean {
+  return name === "part_pod" || name.startsWith("part_pod_");
+}
+
+/**
+ * Tint chassis / finish / module cues on body + addon housings.
  * DamagedHelmet is single-material; stand-in addon GLBs may have several.
  * Mutates in place after load — color/finish clicks do not reload the .glb.
+ *
+ * Addon metal (rail / antenna) engama with chassis+finish.
+ * Entire Pod IR tube + glass + pupil stay factory black / hot IR red — brand lock.
  */
 function applyBuildMaterials(
   viewer: ModelViewerElement,
@@ -129,6 +172,17 @@ function applyBuildMaterials(
   const g = lerp(cg, tg, t);
   const b = lerp(cb, tb, t);
 
+  // Housings share the palette but sit slightly darker / more metallic so they
+  // read as bolted gear, not a flat paint continuation of the shell.
+  const hr = r * 0.82;
+  const hg = g * 0.82;
+  const hb = b * 0.82;
+  const hMetallic = Math.min(1, finish.metallic + 0.12);
+  const hRoughness = Math.max(0.12, finish.roughness - 0.06);
+  const her = finish.emissive[0] * 0.55;
+  const heg = finish.emissive[1] * 0.55;
+  const heb = finish.emissive[2] * 0.55;
+
   let er = finish.emissive[0];
   let eg = finish.emissive[1];
   let eb = finish.emissive[2];
@@ -146,20 +200,34 @@ function applyBuildMaterials(
   }
 
   for (const material of materials) {
-    // Mounted gear (part_*) is geometry, not a tint target: keep its own color
-    // and just show/hide it via alpha. A piece may use several sub-materials
-    // (e.g. part_pod + part_pod_eye), so match by prefix. Everything else is
-    // the body → tinted.
+    // part_* = mounted geometry. Rail/antenna follow chassis; whole Pod IR is locked.
+    // Sub-materials (part_pod + part_pod_glass + part_pod_eye) toggle via prefix.
     if (material.name?.startsWith("part_")) {
       const name = material.name;
       const visible = Array.from(activePartMaterials).some(
         (m) => name === m || name.startsWith(`${m}_`),
       );
-      const bc = material.pbrMetallicRoughness.baseColorFactor;
-      const pr = bc?.[0] ?? 0.09;
-      const pg = bc?.[1] ?? 0.1;
-      const pb = bc?.[2] ?? 0.12;
-      material.pbrMetallicRoughness.setBaseColorFactor([pr, pg, pb, visible ? 1 : 0]);
+      const alpha = visible ? 1 : 0;
+
+      if (isFactoryLockedPart(name)) {
+        const factory =
+          FACTORY_IR[name] ?? FACTORY_IR.part_pod_eye;
+        material.pbrMetallicRoughness.setBaseColorFactor([
+          factory.base[0],
+          factory.base[1],
+          factory.base[2],
+          alpha,
+        ]);
+        material.pbrMetallicRoughness.setMetallicFactor(factory.metallic);
+        material.pbrMetallicRoughness.setRoughnessFactor(factory.roughness);
+        setEmissive(material, factory.emissive);
+        continue;
+      }
+
+      material.pbrMetallicRoughness.setBaseColorFactor([hr, hg, hb, alpha]);
+      material.pbrMetallicRoughness.setMetallicFactor(hMetallic);
+      material.pbrMetallicRoughness.setRoughnessFactor(hRoughness);
+      setEmissive(material, [her, heg, heb]);
       continue;
     }
 
@@ -190,8 +258,22 @@ export default function ModelViewer({
       .map((addon) => addon.partMaterial)
       .filter((name): name is string => Boolean(name)),
   );
-  // Stable dependency key so material effects re-run only when parts change.
   const partsKey = activeAddons.map((addon) => addon.id).join(",");
+
+  // Latest build for the load handler — avoids stale chassis tint on GLB swap.
+  const buildRef = useRef({
+    chassisId,
+    finishId,
+    modules,
+    activePartMaterials,
+  });
+  buildRef.current = {
+    chassisId,
+    finishId,
+    modules,
+    activePartMaterials,
+  };
+
   let exposure = finishId === "plata" ? "1.12" : "1";
   if (modules.thermalVision && modules.lidar) exposure = String(Number(exposure) + 0.3);
   else if (modulesActive) exposure = String(Number(exposure) + 0.15);
@@ -217,8 +299,6 @@ export default function ModelViewer({
     };
   }, []);
 
-  // When modelSrc changes (addon with its own GLB), wait for a fresh load
-  // before tinting. Chassis/finish/module-only changes keep the same src.
   useEffect(() => {
     setModelReady(false);
   }, [modelSrc]);
@@ -227,26 +307,43 @@ export default function ModelViewer({
     const viewer = viewerRef.current;
     if (!viewer || status !== "ready") return;
 
-    const onLoad = () => {
+    const paint = () => {
+      const build = buildRef.current;
+      applyBuildMaterials(
+        viewer,
+        build.chassisId,
+        build.finishId,
+        build.modules,
+        build.activePartMaterials,
+      );
       setModelReady(true);
-      applyBuildMaterials(viewer, chassisId, finishId, modules, activePartMaterials);
+    };
+
+    const onLoad = () => {
+      paint();
     };
 
     viewer.addEventListener("load", onLoad);
+    // Cached / already-loaded GLB — paint immediately so we don't wait forever.
     if (viewer.model?.materials?.length) {
-      setModelReady(true);
-      applyBuildMaterials(viewer, chassisId, finishId, modules, activePartMaterials);
+      paint();
     }
 
     return () => {
       viewer.removeEventListener("load", onLoad);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, chassisId, finishId, modules, modelSrc, partsKey]);
+  }, [status, modelSrc]);
 
+  // In-place retint (same GLB) — chassis/finish/modules/parts, no reload.
   useEffect(() => {
     if (!modelReady || !viewerRef.current) return;
-    applyBuildMaterials(viewerRef.current, chassisId, finishId, modules, activePartMaterials);
+    applyBuildMaterials(
+      viewerRef.current,
+      chassisId,
+      finishId,
+      modules,
+      activePartMaterials,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chassisId, finishId, modules, modelReady, partsKey]);
 

@@ -6,8 +6,9 @@
 // to match the app's dark slate/cyan skin (reads as intentional tech, not boxes).
 //
 // Material name contract (used at runtime via material.name):
-//   <helmet's own material>  -> untouched, receives chassis/finish tint
-//   part_rail / part_pod / part_antenna -> alphaMode MASK, toggled by alpha
+//   <helmet's own material>  -> chassis/finish tint + module glow
+//   part_rail / part_antenna -> housing metal: engama with chassis/finish
+//   part_pod / part_pod_glass / part_pod_eye -> factory-locked IR tube (black + hot red)
 //
 // Run (dependency installed transiently, not saved to package.json):
 //   npm install --no-save @gltf-transform/core
@@ -157,9 +158,11 @@ function addPart(
     .setArray(new Uint16Array(geo.idx))
     .setBuffer(buffer);
 
+  // Start hidden (alpha 0) so a late tint pass never flashes factory colors.
+  // Runtime toggles alpha + engama housing metal with chassis/finish.
   const material = doc
     .createMaterial(materialName)
-    .setBaseColorFactor([baseColor[0], baseColor[1], baseColor[2], 1])
+    .setBaseColorFactor([baseColor[0], baseColor[1], baseColor[2], 0])
     .setMetallicFactor(metallic)
     .setRoughnessFactor(roughness)
     .setEmissiveFactor(emissive)
@@ -204,14 +207,13 @@ const rail = createGeometry();
     ]);
   }
 }
-addPart("part_rail", rail, { emissive: [0.16, 0.09, 0.0] }); // warm amber accent
+// Neutral defaults — runtime applies chassis/finish; no baked amber flash.
+addPart("part_rail", rail, { emissive: [0, 0, 0] });
 
-// --- Bionic telescopic optic: stepped metal barrel + dark glass + soft pupil -
-// A precision robotic zoom lens, tonal with the helmet's metal/gold — not a
-// grotesque red disc. Metal + glass = part_pod; the glowing pupil = part_pod_eye
-// (both toggle together via prefix). Concentric cylinders of decreasing radius,
-// stepped forward along +Z, read as telescoping lens elements.
+// --- Bionic telescopic optic: full tube is factory-locked (black + hot IR) ---
+// Housing does NOT engama — brand optic. Rail/antenna still follow chassis.
 const podMetal = createGeometry();
+const podGlass = createGeometry();
 const podEye = createGeometry();
 {
   const px = c[0] + size[0] * 0.28;
@@ -224,28 +226,35 @@ const podEye = createGeometry();
   addCylinder(podMetal, { radius: sx * 0.1, height: sz * 0.05, axis: "z", center: [px, py, z0] });
   addCylinder(podMetal, { radius: sx * 0.09, height: sz * 0.06, axis: "z", center: [px, py, z0 + sz * 0.05] });
   addCylinder(podMetal, { radius: sx * 0.075, height: sz * 0.05, axis: "z", center: [px, py, z0 + sz * 0.105] });
-  // Front bezel lip + dark IR glass (cool charcoal, not warm amber).
+  // Front bezel lip
   addCylinder(podMetal, { radius: sx * 0.085, height: sz * 0.02, axis: "z", center: [px, py, z0 + sz * 0.14] });
-  addCylinder(podMetal, { radius: sx * 0.062, height: sz * 0.014, axis: "z", center: [px, py, z0 + sz * 0.152] });
 
-  // Robotic IR eye: dark iris ring + hot crimson pupil + white-hot core.
-  // Reads as infrared sensor, not a warm amber LED.
+  // Dark IR glass
+  addCylinder(podGlass, { radius: sx * 0.062, height: sz * 0.014, axis: "z", center: [px, py, z0 + sz * 0.152] });
+
+  // Hot infrared pupil — pure red core
   addCylinder(podEye, { radius: sx * 0.048, height: sz * 0.008, axis: "z", center: [px, py, z0 + sz * 0.158] }); // iris
   addCylinder(podEye, { radius: sx * 0.028, height: sz * 0.012, axis: "z", center: [px, py, z0 + sz * 0.162] }); // pupil
   addCylinder(podEye, { radius: sx * 0.012, height: sz * 0.014, axis: "z", center: [px, py, z0 + sz * 0.166] }); // core
 }
 addPart("part_pod", podMetal, {
-  baseColor: [0.1, 0.1, 0.12], // cool gunmetal
-  emissive: [0.01, 0.01, 0.02],
-  metallic: 0.9,
-  roughness: 0.34,
+  baseColor: [0.05, 0.05, 0.055], // matte black tube
+  emissive: [0, 0, 0],
+  metallic: 0.72,
+  roughness: 0.42,
+});
+addPart("part_pod_glass", podGlass, {
+  baseColor: [0.03, 0.03, 0.035],
+  emissive: [0.02, 0.0, 0.0],
+  metallic: 0.1,
+  roughness: 0.14,
 });
 addPart("part_pod_eye", podEye, {
-  baseColor: [0.06, 0.01, 0.02], // deep IR crimson
-  emissive: [0.95, 0.08, 0.18], // infrared red / magenta hot
-  emissiveStrength: 3.2,
-  metallic: 0.05,
-  roughness: 0.22,
+  baseColor: [0.12, 0.0, 0.01],
+  emissive: [1.0, 0.02, 0.03], // pure hot IR red
+  emissiveStrength: 5.0,
+  metallic: 0.02,
+  roughness: 0.18,
 });
 
 // --- Antenna: short side-mounted mast — stays within the helmet's vertical footprint
@@ -278,7 +287,7 @@ const antenna = createGeometry();
     az,
   ]);
 }
-addPart("part_antenna", antenna, { emissive: [0.0, 0.14, 0.2] });
+addPart("part_antenna", antenna, { emissive: [0, 0, 0] });
 
 mkdirSync(dirname(OUT), { recursive: true });
 await io.write(OUT, doc);
