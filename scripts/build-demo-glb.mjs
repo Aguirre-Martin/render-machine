@@ -193,22 +193,60 @@ function addPart(
 // Gear hugs a sphere-ish surface (helmet ≈ sphere), embedded slightly so it
 // reads as bolted-on, not floating. Placed off the visor so nothing covers it.
 
-// --- Side rail: short vertical beam + two mounts, on the side surface --------
+// --- Side rail: slender tubular mast + collar clamps (antenna-like finish) ---
+// Rounded cylinders instead of chunky boxes — reads as machined gear, not Lego.
 const rail = createGeometry();
 {
-  const rx = c[0] + size[0] * 0.36; // inside the bbox → sits on the side
+  const rx = c[0] + size[0] * 0.36;
   const rz = c[2] + size[2] * 0.14;
-  addBox(rail, size[0] * 0.08, size[1] * 0.42, size[2] * 0.09, [rx, c[1], rz]);
-  for (const dy of [-0.14, 0.14]) {
-    addBox(rail, size[0] * 0.13, size[1] * 0.08, size[2] * 0.11, [
-      rx,
-      c[1] + size[1] * dy,
-      rz,
-    ]);
+  const ry = c[1];
+  const mastR = size[0] * 0.018;
+  const mastH = size[1] * 0.38;
+
+  // Main vertical tube
+  addCylinder(rail, {
+    radius: mastR,
+    height: mastH,
+    seg: 24,
+    axis: "y",
+    center: [rx, ry, rz],
+  });
+  // Tip / base caps (slightly wider, like the antenna tip)
+  for (const dy of [mastH * 0.48, -mastH * 0.48]) {
+    addCylinder(rail, {
+      radius: mastR * 1.55,
+      height: size[1] * 0.028,
+      seg: 20,
+      axis: "y",
+      center: [rx, ry + dy, rz],
+    });
+  }
+  // Two collar clamps bolted to the helmet side
+  for (const dy of [-0.12, 0.12]) {
+    addCylinder(rail, {
+      radius: mastR * 2.4,
+      height: size[1] * 0.045,
+      seg: 20,
+      axis: "y",
+      center: [rx, ry + size[1] * dy, rz],
+    });
+    // Short stub toward the shell (mount peg)
+    addCylinder(rail, {
+      radius: mastR * 1.15,
+      height: size[0] * 0.055,
+      seg: 16,
+      axis: "x",
+      center: [rx - size[0] * 0.028, ry + size[1] * dy, rz],
+    });
   }
 }
-// Neutral defaults — runtime applies chassis/finish; no baked amber flash.
-addPart("part_rail", rail, { emissive: [0, 0, 0] });
+// Same gunmetal PBR as the antenna — runtime engama with chassis/finish.
+addPart("part_rail", rail, {
+  baseColor: [0.09, 0.1, 0.12],
+  emissive: [0, 0, 0],
+  metallic: 0.85,
+  roughness: 0.38,
+});
 
 // --- Bionic telescopic optic: full tube is factory-locked (black + hot IR) ---
 // Housing does NOT engama — brand optic. Rail/antenna still follow chassis.

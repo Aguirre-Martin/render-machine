@@ -177,7 +177,7 @@ export const FINISH_OPTIONS: FinishOption[] = [
     id: "tornilleria-negra",
     label: "Mate Oscuro",
     description:
-      "Baja el brillo (roughness alto) y oscurece un poco la superficie. En este demo el casco tiene un solo material.",
+      "Acabado mate de baja reflectancia: reduce el brillo y oscurece levemente la superficie del chasis.",
     videoUrl: V.valvulas,
     metallic: 0.12,
     roughness: 0.92,
@@ -244,7 +244,7 @@ export const ADDON_OPTIONS: AddonOption[] = [
     partMaterial: "part_rail",
     compatibleWith: ["Chasis estándar", "Kit mate / metálico"],
     detailBullets: [
-      "Anclaje slot_rail_L — pivot en el punto de montaje",
+      "Anclaje slot_rail_L — tubo mecanizado con collares",
       "Metal engama con chasis y acabado seleccionados",
       "Soporta clamp M4 / payload liviano",
     ],
@@ -269,7 +269,7 @@ export const ADDON_OPTIONS: AddonOption[] = [
     id: "antena-x",
     label: "Antena X",
     description:
-      "Antena de telemetría — incompatible con LIDAR activo en este MVP.",
+      "Antena de telemetría — incompatible con LIDAR activo.",
     slot: "antenna",
     videoUrl: V.sensores,
     partMaterial: "part_antenna",
@@ -278,7 +278,7 @@ export const ADDON_OPTIONS: AddonOption[] = [
     detailBullets: [
       "Montaje lateral — slot_antenna en costado del casco",
       "Metal engama con chasis y acabado seleccionados",
-      "Bloqueada si LIDAR está activo (regla demo)",
+      "Bloqueada si LIDAR está activo",
     ],
   },
 ];

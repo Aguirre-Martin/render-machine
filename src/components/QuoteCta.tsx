@@ -66,8 +66,7 @@ export default function QuoteCta({
                     Propuesta de configuración
                   </h2>
                   <p className="mt-1 text-sm leading-relaxed text-slate-400">
-                    Resumen de piezas elegidas. En producción esto exportaría un
-                    PDF con spec sheet — sin generación real en este MVP.
+                    Resumen de la configuración seleccionada para cotización.
                   </p>
                 </div>
               </div>

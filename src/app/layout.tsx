@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Industrial Configurator Pro — Demo Showroom",
+  title: "Industrial Configurator Pro",
   description:
     "Configurador web interactivo de maquinaria industrial: visor 3D, video técnico y selección de módulos.",
 };

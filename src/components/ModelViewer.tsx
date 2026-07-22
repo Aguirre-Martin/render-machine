@@ -84,8 +84,8 @@ function WebGLFallback() {
       </h3>
       <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-400">
         Este entorno (p. ej. Simple Browser de Cursor o GPU deshabilitada) no
-        puede crear un contexto WebGL. Abre la demo en Chrome/Firefox normal con
-        hardware acceleration activo.
+        puede crear un contexto WebGL. Abrí el configurador en Chrome o Firefox
+        con aceleración por hardware activa.
       </p>
       <a
         href="http://localhost:3000"
@@ -188,15 +188,16 @@ function applyBuildMaterials(
   let eb = finish.emissive[2];
 
   if (modules.thermalVision) {
-    // Infrared / thermal cue — crimson, not warm amber
-    er = Math.min(1, er + 0.75);
-    eg = Math.min(1, eg + 0.06);
-    eb = Math.min(1, eb + 0.12);
+    // Infrared / thermal cue — hot crimson wash on the shell
+    er = Math.min(1, er + 0.92);
+    eg = Math.min(1, eg + 0.04);
+    eb = Math.min(1, eb + 0.08);
   }
   if (modules.lidar) {
-    er = Math.min(1, er + 0.05);
-    eg = Math.min(1, eg + 0.55);
-    eb = Math.min(1, eb + 0.75);
+    // LIDAR scan cue — cool cyan glow
+    er = Math.min(1, er + 0.04);
+    eg = Math.min(1, eg + 0.72);
+    eb = Math.min(1, eb + 0.95);
   }
 
   for (const material of materials) {
@@ -275,8 +276,8 @@ export default function ModelViewer({
   };
 
   let exposure = finishId === "plata" ? "1.12" : "1";
-  if (modules.thermalVision && modules.lidar) exposure = String(Number(exposure) + 0.3);
-  else if (modulesActive) exposure = String(Number(exposure) + 0.15);
+  if (modules.thermalVision && modules.lidar) exposure = String(Number(exposure) + 0.42);
+  else if (modulesActive) exposure = String(Number(exposure) + 0.22);
 
   useEffect(() => {
     let cancelled = false;
@@ -369,19 +370,20 @@ export default function ModelViewer({
       <div
         className={`pointer-events-none absolute inset-0 transition-opacity duration-500 ${
           modules.thermalVision
-            ? "bg-[radial-gradient(ellipse_at_center,_rgba(244,63,94,0.12)_0%,_transparent_60%)] opacity-100"
+            ? "bg-[radial-gradient(ellipse_at_center,_rgba(244,63,94,0.22)_0%,_rgba(244,63,94,0.06)_45%,_transparent_70%)] opacity-100"
             : "opacity-0"
         }`}
       />
       <div
         className={`pointer-events-none absolute inset-0 transition-opacity duration-500 ${
           modules.lidar
-            ? "bg-[radial-gradient(ellipse_at_center,_rgba(34,211,238,0.14)_0%,_transparent_60%)] opacity-100"
-            : modules.thermalVision
-              ? "opacity-0"
-              : "bg-[radial-gradient(ellipse_at_center,_rgba(34,211,238,0.06)_0%,_transparent_65%)] opacity-100"
+            ? "bg-[radial-gradient(ellipse_at_center,_rgba(34,211,238,0.24)_0%,_rgba(34,211,238,0.07)_45%,_transparent_70%)] opacity-100"
+            : "opacity-0"
         }`}
       />
+      {!modulesActive && (
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(34,211,238,0.06)_0%,_transparent_65%)]" />
+      )}
 
       <model-viewer
         ref={viewerRef as Ref<HTMLElement>}
@@ -408,14 +410,14 @@ export default function ModelViewer({
           {MODULE_OPTIONS.filter((mod) => modules[mod.id]).map((mod) => (
             <span
               key={mod.id}
-              className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 font-mono text-[10px] tracking-wider uppercase backdrop-blur-sm ${
+              className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1.5 font-mono text-[10px] tracking-wider uppercase backdrop-blur-sm ${
                 mod.id === "thermalVision"
-                  ? "border-rose-400/50 bg-rose-500/15 text-rose-200"
-                  : "border-cyan-400/50 bg-cyan-400/15 text-cyan-200"
+                  ? "border-rose-400/70 bg-rose-500/25 text-rose-100 shadow-[0_0_12px_rgba(244,63,94,0.25)]"
+                  : "border-cyan-400/70 bg-cyan-400/25 text-cyan-100 shadow-[0_0_12px_rgba(34,211,238,0.25)]"
               }`}
             >
               <span
-                className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                className={`h-1.5 w-1.5 shrink-0 animate-pulse rounded-full ${
                   mod.id === "thermalVision" ? "bg-rose-400" : "bg-cyan-400"
                 }`}
               />
