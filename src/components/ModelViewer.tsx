@@ -4,10 +4,10 @@ import type { Ref } from "react";
 import { Box, ExternalLink, MonitorOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
+  ADDON_OPTIONS,
   getChassis,
   getFinish,
   MODULE_OPTIONS,
-  MODEL_SRC,
   type BuildModules,
 } from "@/data/mockData";
 
@@ -15,15 +15,21 @@ type ModelViewerProps = {
   chassisId: string;
   finishId: string;
   modules: BuildModules;
+  /** Resolved GLB URL — swaps to the multi-part demo machine in the addons step */
+  modelSrc: string;
+  /** Mounted addons keyed by id — drive part show/hide via material alpha */
+  parts: Record<string, boolean>;
 };
 
 /** Minimal surface of @google/model-viewer used for live material tinting. */
 type ModelViewerElement = HTMLElement & {
   model?: {
     materials: Array<{
+      name?: string;
       setEmissiveFactor?: (rgb: [number, number, number]) => void;
       emissiveFactor?: { set: (x: number, y: number, z: number) => void };
       pbrMetallicRoughness: {
+        baseColorFactor?: readonly number[];
         setBaseColorFactor: (rgba: [number, number, number, number]) => void;
         setMetallicFactor: (value: number) => void;
         setRoughnessFactor: (value: number) => void;
@@ -99,18 +105,19 @@ function WebGLFallback() {
 }
 
 /**
- * DamagedHelmet ships a single PBR material — we always tint materials[0].
- * Clears painted albedo so chassis / finish / module cues stay readable.
- * Mutates in place; never reloads the .glb on option changes.
+ * Tint chassis / finish / module cues on every material.
+ * DamagedHelmet is single-material; stand-in addon GLBs may have several.
+ * Mutates in place after load — color/finish clicks do not reload the .glb.
  */
 function applyBuildMaterials(
   viewer: ModelViewerElement,
   chassisId: string,
   finishId: string,
   modules: BuildModules,
+  activePartMaterials: Set<string>,
 ) {
-  const material = viewer.model?.materials?.[0];
-  if (!material) return;
+  const materials = viewer.model?.materials;
+  if (!materials?.length) return;
 
   const chassis = getChassis(chassisId);
   const finish = getFinish(finishId);
@@ -118,25 +125,19 @@ function applyBuildMaterials(
   const [tr, tg, tb] = finish.tint;
   const t = finish.tintStrength;
 
-  // Chassis is the primary color; finish only blends a light wash + PBR surface
   const r = lerp(cr, tr, t);
   const g = lerp(cg, tg, t);
   const b = lerp(cb, tb, t);
 
-  material.pbrMetallicRoughness.baseColorTexture?.setTexture(null);
-  material.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1]);
-  material.pbrMetallicRoughness.setMetallicFactor(finish.metallic);
-  material.pbrMetallicRoughness.setRoughnessFactor(finish.roughness);
-
-  // Module glow stacked on finish emissive
   let er = finish.emissive[0];
   let eg = finish.emissive[1];
   let eb = finish.emissive[2];
 
   if (modules.thermalVision) {
-    er = Math.min(1, er + 0.85);
-    eg = Math.min(1, eg + 0.18);
-    eb = Math.min(1, eb + 0.02);
+    // Infrared / thermal cue — crimson, not warm amber
+    er = Math.min(1, er + 0.75);
+    eg = Math.min(1, eg + 0.06);
+    eb = Math.min(1, eb + 0.12);
   }
   if (modules.lidar) {
     er = Math.min(1, er + 0.05);
@@ -144,13 +145,38 @@ function applyBuildMaterials(
     eb = Math.min(1, eb + 0.75);
   }
 
-  setEmissive(material, [er, eg, eb]);
+  for (const material of materials) {
+    // Mounted gear (part_*) is geometry, not a tint target: keep its own color
+    // and just show/hide it via alpha. A piece may use several sub-materials
+    // (e.g. part_pod + part_pod_eye), so match by prefix. Everything else is
+    // the body → tinted.
+    if (material.name?.startsWith("part_")) {
+      const name = material.name;
+      const visible = Array.from(activePartMaterials).some(
+        (m) => name === m || name.startsWith(`${m}_`),
+      );
+      const bc = material.pbrMetallicRoughness.baseColorFactor;
+      const pr = bc?.[0] ?? 0.09;
+      const pg = bc?.[1] ?? 0.1;
+      const pb = bc?.[2] ?? 0.12;
+      material.pbrMetallicRoughness.setBaseColorFactor([pr, pg, pb, visible ? 1 : 0]);
+      continue;
+    }
+
+    material.pbrMetallicRoughness.baseColorTexture?.setTexture(null);
+    material.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1]);
+    material.pbrMetallicRoughness.setMetallicFactor(finish.metallic);
+    material.pbrMetallicRoughness.setRoughnessFactor(finish.roughness);
+    setEmissive(material, [er, eg, eb]);
+  }
 }
 
 export default function ModelViewer({
   chassisId,
   finishId,
   modules,
+  modelSrc,
+  parts,
 }: ModelViewerProps) {
   const viewerRef = useRef<ModelViewerElement | null>(null);
   const [status, setStatus] = useState<"checking" | "ready" | "no-webgl">(
@@ -158,6 +184,14 @@ export default function ModelViewer({
   );
   const [modelReady, setModelReady] = useState(false);
   const modulesActive = modules.thermalVision || modules.lidar;
+  const activeAddons = ADDON_OPTIONS.filter((addon) => parts[addon.id]);
+  const activePartMaterials = new Set(
+    activeAddons
+      .map((addon) => addon.partMaterial)
+      .filter((name): name is string => Boolean(name)),
+  );
+  // Stable dependency key so material effects re-run only when parts change.
+  const partsKey = activeAddons.map((addon) => addon.id).join(",");
   let exposure = finishId === "plata" ? "1.12" : "1";
   if (modules.thermalVision && modules.lidar) exposure = String(Number(exposure) + 0.3);
   else if (modulesActive) exposure = String(Number(exposure) + 0.15);
@@ -183,30 +217,38 @@ export default function ModelViewer({
     };
   }, []);
 
+  // When modelSrc changes (addon with its own GLB), wait for a fresh load
+  // before tinting. Chassis/finish/module-only changes keep the same src.
+  useEffect(() => {
+    setModelReady(false);
+  }, [modelSrc]);
+
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer || status !== "ready") return;
 
     const onLoad = () => {
       setModelReady(true);
-      applyBuildMaterials(viewer, chassisId, finishId, modules);
+      applyBuildMaterials(viewer, chassisId, finishId, modules, activePartMaterials);
     };
 
     viewer.addEventListener("load", onLoad);
     if (viewer.model?.materials?.length) {
       setModelReady(true);
-      applyBuildMaterials(viewer, chassisId, finishId, modules);
+      applyBuildMaterials(viewer, chassisId, finishId, modules, activePartMaterials);
     }
 
     return () => {
       viewer.removeEventListener("load", onLoad);
     };
-  }, [status, chassisId, finishId, modules]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, chassisId, finishId, modules, modelSrc, partsKey]);
 
   useEffect(() => {
     if (!modelReady || !viewerRef.current) return;
-    applyBuildMaterials(viewerRef.current, chassisId, finishId, modules);
-  }, [chassisId, finishId, modules, modelReady]);
+    applyBuildMaterials(viewerRef.current, chassisId, finishId, modules, activePartMaterials);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chassisId, finishId, modules, modelReady, partsKey]);
 
   if (status === "checking") {
     return (
@@ -230,7 +272,7 @@ export default function ModelViewer({
       <div
         className={`pointer-events-none absolute inset-0 transition-opacity duration-500 ${
           modules.thermalVision
-            ? "bg-[radial-gradient(ellipse_at_center,_rgba(249,115,22,0.14)_0%,_transparent_60%)] opacity-100"
+            ? "bg-[radial-gradient(ellipse_at_center,_rgba(244,63,94,0.12)_0%,_transparent_60%)] opacity-100"
             : "opacity-0"
         }`}
       />
@@ -246,7 +288,7 @@ export default function ModelViewer({
 
       <model-viewer
         ref={viewerRef as Ref<HTMLElement>}
-        src={MODEL_SRC}
+        src={modelSrc}
         alt="Modelo 3D de maquinaria industrial"
         camera-controls
         touch-action="pan-y"
@@ -264,24 +306,33 @@ export default function ModelViewer({
         }}
       />
 
-      {/* Active module tags — overlay top-left (not model hotspots) */}
-      {modulesActive && (
-        <div className="pointer-events-none absolute top-3 left-3 z-10 flex max-w-[min(100%,16rem)] flex-col gap-1.5">
+      {/* Active module / addon tags — horizontal strip to save vertical space */}
+      {(modulesActive || activeAddons.length > 0) && (
+        <div className="pointer-events-none absolute top-3 right-3 left-3 z-10 flex flex-wrap gap-1.5">
           {MODULE_OPTIONS.filter((mod) => modules[mod.id]).map((mod) => (
             <span
               key={mod.id}
               className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 font-mono text-[10px] tracking-wider uppercase backdrop-blur-sm ${
                 mod.id === "thermalVision"
-                  ? "border-orange-400/50 bg-orange-500/15 text-orange-200"
+                  ? "border-rose-400/50 bg-rose-500/15 text-rose-200"
                   : "border-cyan-400/50 bg-cyan-400/15 text-cyan-200"
               }`}
             >
               <span
                 className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                  mod.id === "thermalVision" ? "bg-orange-400" : "bg-cyan-400"
+                  mod.id === "thermalVision" ? "bg-rose-400" : "bg-cyan-400"
                 }`}
               />
               {mod.label} · Activo
+            </span>
+          ))}
+          {activeAddons.map((addon) => (
+            <span
+              key={addon.id}
+              className="inline-flex items-center gap-1.5 rounded border border-cyan-400/50 bg-cyan-400/15 px-2 py-1 font-mono text-[10px] tracking-wider text-cyan-200 uppercase backdrop-blur-sm"
+            >
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400" />
+              {addon.label} · Montado
             </span>
           ))}
         </div>

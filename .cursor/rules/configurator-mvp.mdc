@@ -20,6 +20,7 @@ Mirror: wizard steps, tray cards with selected state, Volver/Siguiente, live sum
 - Keep grid layout and dark slate/cyan look
 - Chassis color dominates; finish is surface (matte/hi-vis/chrome), not a full repaint
 - Modules = glow feedback; no IR/LIDAR hotspot labels on the helmet
+- Addons = geometry step (max 1); keep base helmet — never swap hero for unrelated stand-in GLBs
 - No prices in UI for now; no real PDF
 - No new dependencies unless asked
-- Addons/agregados = future geometry (separate assets/slots), not another material tint
+- Do not treat agregados as another material tint

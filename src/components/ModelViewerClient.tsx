@@ -21,18 +21,24 @@ type ModelViewerClientProps = {
   chassisId: string;
   finishId: string;
   modules: BuildModules;
+  modelSrc: string;
+  parts: Record<string, boolean>;
 };
 
 export default function ModelViewerClient({
   chassisId,
   finishId,
   modules,
+  modelSrc,
+  parts,
 }: ModelViewerClientProps) {
   return (
     <ModelViewer
       chassisId={chassisId}
       finishId={finishId}
       modules={modules}
+      modelSrc={modelSrc}
+      parts={parts}
     />
   );
 }
