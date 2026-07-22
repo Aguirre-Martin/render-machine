@@ -16,7 +16,7 @@ npm install
 npm run dev
 ```
 
-Abrí [http://localhost:3000](http://localhost:3000).
+Abre [http://localhost:3000](http://localhost:3000).
 
 ## Deploy (Vercel)
 
@@ -24,8 +24,8 @@ Abrí [http://localhost:3000](http://localhost:3000).
 npx vercel
 ```
 
-O conectá el repo en el dashboard de Vercel. Build command: `next build`.
-Push a `main` dispara producción si el repo está linkeado.
+O conecta el repo en el dashboard de Vercel. Build command: `next build`.
+Push a `main` dispara producción si el repo está vinculado.
 
 ## Stack
 

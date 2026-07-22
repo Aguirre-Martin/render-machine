@@ -155,10 +155,10 @@ export const CHASSIS_OPTIONS: ChassisOption[] = [
     videoUrl: V.valvulas,
   },
   {
-    id: "amarillo-industrial",
-    label: "Amarillo Industrial",
-    swatch: "#E6B800",
-    baseColor: [0.9, 0.72, 0],
+    id: "rojo-industrial",
+    label: "Rojo Industrial",
+    swatch: "#C41E1E",
+    baseColor: [0.77, 0.12, 0.12],
     videoUrl: V.motor,
   },
   {
