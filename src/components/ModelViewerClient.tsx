@@ -22,7 +22,7 @@ type ModelViewerClientProps = {
   finishId: string;
   modules: BuildModules;
   modelSrc: string;
-  addonId: string | null;
+  parts: Record<string, boolean>;
 };
 
 export default function ModelViewerClient({
@@ -30,7 +30,7 @@ export default function ModelViewerClient({
   finishId,
   modules,
   modelSrc,
-  addonId,
+  parts,
 }: ModelViewerClientProps) {
   return (
     <ModelViewer
@@ -38,7 +38,7 @@ export default function ModelViewerClient({
       finishId={finishId}
       modules={modules}
       modelSrc={modelSrc}
-      addonId={addonId}
+      parts={parts}
     />
   );
 }

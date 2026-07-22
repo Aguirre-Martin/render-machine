@@ -78,7 +78,7 @@ export default function ControlPanel({
         })}
       </div>
 
-      <div className="min-h-[200px] rounded-lg border border-slate-700/80 bg-slate-900/40 p-3">
+      <div className="min-h-0 rounded-lg border border-slate-700/80 bg-slate-900/40 p-3">
         {build.activeStep === "chassis" && (
           <div className="space-y-3">
             <p className="text-xs text-slate-400">
@@ -243,17 +243,16 @@ export default function ControlPanel({
         )}
 
         {build.activeStep === "addons" && (
-          <div className="space-y-2">
-            <p className="text-xs text-slate-400">
-              Agregados — máx. 1. Suma a la config y al video; la geometría 3D
-              sobre el casco espera assets del cliente.
+          <div>
+            <p className="mb-2 text-xs text-slate-400">
+              Montá una pieza — se ve en el 3D y dispara su video.
             </p>
-            <ul className="grid gap-2">
+            <ul className="grid grid-cols-3 gap-1.5">
               {ADDON_OPTIONS.map((option) => (
                 <AddonCard
                   key={option.id}
                   option={option}
-                  selected={build.addonId === option.id}
+                  selected={Boolean(build.parts[option.id])}
                   blockReason={getAddonBlockReason(option, build.modules)}
                   onSelect={() => onAddonSelect(option.id)}
                   onDetail={() => setDetailAddonId(option.id)}
@@ -316,9 +315,9 @@ function AddonCard({
   const blocked = Boolean(blockReason);
 
   return (
-    <li>
+    <li className="min-w-0">
       <div
-        className={`rounded-lg border transition-colors ${
+        className={`flex h-full flex-col rounded-lg border transition-colors ${
           selected
             ? "border-cyan-400/70 bg-cyan-400/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
             : blocked
@@ -331,64 +330,45 @@ function AddonCard({
           disabled={blocked}
           onClick={onSelect}
           aria-pressed={selected}
-          className="flex w-full items-start gap-3 px-3 py-3 text-left disabled:cursor-not-allowed"
+          className="flex min-h-0 flex-1 flex-col items-center gap-1.5 px-2 py-2.5 text-center disabled:cursor-not-allowed"
         >
           <span
-            className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded border ${
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded border ${
               selected
                 ? "border-cyan-400/50 bg-cyan-400/15 text-cyan-300"
                 : "border-slate-700 bg-slate-950 text-slate-500"
             }`}
           >
             {selected ? (
-              <Check className="h-4 w-4" strokeWidth={2} />
+              <Check className="h-3.5 w-3.5" strokeWidth={2} />
             ) : (
-              <span className="h-2 w-2 rounded-full bg-slate-600" />
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />
             )}
           </span>
-          <span className="min-w-0 flex-1">
-            <span className="flex flex-wrap items-center gap-2">
-              <span
-                className={`text-sm font-medium ${
-                  selected ? "text-slate-50" : "text-slate-200"
-                }`}
-              >
-                {option.label}
-              </span>
-              <span className="rounded border border-slate-600/80 px-1.5 py-0.5 font-mono text-[9px] tracking-wider text-slate-400 uppercase">
-                {option.slot}
-              </span>
-            </span>
-            <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-slate-400">
-              {option.description}
-            </span>
-            <span className="mt-2 flex flex-wrap gap-1">
-              {option.compatibleWith.map((chip) => (
-                <span
-                  key={chip}
-                  className="rounded border border-slate-700/80 bg-slate-900/80 px-1.5 py-0.5 text-[10px] text-slate-400"
-                >
-                  Compatible con {chip}
-                </span>
-              ))}
-            </span>
-            {blocked && (
-              <span className="mt-2 block text-[11px] text-amber-300/90">
-                {blockReason}
-              </span>
-            )}
-          </span>
-        </button>
-        <div className="flex justify-end border-t border-slate-800/80 px-2 py-1.5">
-          <button
-            type="button"
-            onClick={onDetail}
-            className="inline-flex items-center gap-1 rounded px-2 py-1 font-mono text-[10px] tracking-wide text-slate-400 uppercase transition-colors hover:bg-slate-800 hover:text-cyan-300"
+          <span
+            className={`text-[11px] leading-tight font-medium ${
+              selected ? "text-slate-50" : "text-slate-200"
+            }`}
           >
-            <Info className="h-3 w-3" strokeWidth={2} />
-            Detalle
-          </button>
-        </div>
+            {option.label}
+          </span>
+          <span className="rounded border border-slate-600/80 px-1 py-0.5 font-mono text-[8px] tracking-wider text-slate-500 uppercase">
+            {option.slot}
+          </span>
+          {blocked && (
+            <span className="line-clamp-2 text-[9px] leading-tight text-amber-300/90">
+              {blockReason}
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={onDetail}
+          className="inline-flex items-center justify-center gap-1 border-t border-slate-800/80 px-1.5 py-1.5 font-mono text-[9px] tracking-wide text-slate-500 uppercase transition-colors hover:bg-slate-800 hover:text-cyan-300"
+        >
+          <Info className="h-3 w-3" strokeWidth={2} />
+          Detalle
+        </button>
       </div>
     </li>
   );
@@ -420,6 +400,19 @@ function AddonDetailDrawer({
           >
             {addon.label}
           </h4>
+          <p className="mt-1 text-xs leading-relaxed text-slate-400">
+            {addon.description}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {addon.compatibleWith.map((chip) => (
+              <span
+                key={chip}
+                className="rounded border border-slate-700/80 bg-slate-900/80 px-1.5 py-0.5 text-[10px] text-slate-400"
+              >
+                Compatible con {chip}
+              </span>
+            ))}
+          </div>
         </div>
         <button
           type="button"
@@ -433,19 +426,66 @@ function AddonDetailDrawer({
 
       <div className="mt-3 flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
         <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-md border border-slate-700 bg-slate-900">
-          <div className="flex flex-col items-center gap-2 px-4 text-center">
+          {/* Subtle grid background */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.06]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(148,163,184,1) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,1) 1px,transparent 1px)",
+              backgroundSize: "20px 20px",
+            }}
+          />
+
+          <div className="relative flex flex-col items-center gap-3 px-4 text-center">
             {addon.slot === "rail_L" && (
-              <span className="block h-2 w-20 rounded-sm border border-cyan-300/50 bg-slate-600/80" />
+              <div className="flex flex-col items-center gap-2">
+                {/* Picatinny rail — top-down view */}
+                <div className="relative flex h-10 w-44 items-center overflow-hidden rounded border border-cyan-300/30 bg-slate-700/70">
+                  <span className="h-full w-2.5 shrink-0 border-r border-slate-500/50 bg-slate-500/70" />
+                  <div className="flex flex-1 items-center justify-around px-1.5">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <span
+                        key={i}
+                        className="h-[18px] w-3 rounded-sm border border-slate-500/50 bg-slate-900/65"
+                      />
+                    ))}
+                  </div>
+                  <span className="h-full w-2.5 shrink-0 border-l border-slate-500/50 bg-slate-500/70" />
+                  <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-cyan-300/25" />
+                  <span className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-cyan-300/25" />
+                </div>
+                <p className="font-mono text-[9px] tracking-widest text-slate-500 uppercase">
+                  Vista superior · slot_rail_L
+                </p>
+              </div>
             )}
+
             {addon.slot === "visor" && (
-              <span className="block h-10 w-12 rounded-md border border-orange-300/50 bg-slate-700" />
+              <div className="flex flex-col items-center gap-2">
+                <span className="relative flex h-10 w-12 items-center justify-center rounded-md border border-rose-400/40 bg-slate-700">
+                  <span className="relative h-4 w-4 rounded-full border border-rose-500/50 bg-rose-950 shadow-[0_0_10px_2px_rgba(244,63,94,0.55)]">
+                    <span className="absolute inset-0 m-auto h-1.5 w-1.5 rounded-full bg-rose-300" />
+                  </span>
+                </span>
+                <p className="font-mono text-[9px] tracking-widest text-slate-500 uppercase">
+                  Vista frontal · slot_visor
+                </p>
+              </div>
             )}
+
             {addon.slot === "antenna" && (
-              <span className="flex flex-col items-center">
-                <span className="h-3 w-3 rounded-full bg-cyan-300/70" />
-                <span className="h-12 w-0.5 bg-cyan-300/60" />
-              </span>
+              <div className="flex items-end justify-center gap-5">
+                {/* Helmet side silhouette — reference surface */}
+                <span className="h-14 w-9 shrink-0 rounded-t-[45%] border border-slate-600/50 bg-slate-800/50" />
+                {/* Side-mounted antenna — short mast, lateral */}
+                <div className="mb-3 flex flex-col items-center gap-px">
+                  <span className="h-1.5 w-1.5 rounded-full bg-cyan-300/85 shadow-[0_0_6px_2px_rgba(34,211,238,0.4)]" />
+                  <span className="h-6 w-0.5 rounded-full bg-cyan-300/55" />
+                  <span className="h-2 w-5 rounded-sm border border-cyan-300/30 bg-slate-500/80" />
+                </div>
+              </div>
             )}
+
             <p className="font-mono text-[10px] tracking-wide text-slate-400 uppercase">
               Spec sheet · mesh 3D pendiente
             </p>

@@ -56,37 +56,44 @@ export default function ConfiguratorShell() {
       const nextValue = !prev.modules[id];
       const nextModules = { ...prev.modules, [id]: nextValue };
 
-      // Drop addon if the newly enabled module blocks it
-      let addonId = prev.addonId;
-      if (nextValue && addonId) {
-        const addon = getAddon(addonId);
-        if (addon && getAddonBlockReason(addon, nextModules)) {
-          addonId = null;
+      // Drop any mounted part that the newly enabled module blocks.
+      let parts = prev.parts;
+      if (nextValue) {
+        parts = { ...prev.parts };
+        for (const partId of Object.keys(parts)) {
+          const addon = getAddon(partId);
+          if (parts[partId] && addon && getAddonBlockReason(addon, nextModules)) {
+            delete parts[partId];
+          }
         }
       }
 
       return {
         ...prev,
         modules: nextModules,
-        addonId,
+        parts,
         // Preview the module video when enabling; keep current media when disabling
         activeMediaId: nextValue ? id : prev.activeMediaId,
       };
     });
   }
 
-  /** Toggle addon selection — max one; click again to clear. */
+  /** Mount / unmount an addon — stackable; click again to remove. */
   function selectAddon(addonId: string) {
     setBuild((prev) => {
       const addon = getAddon(addonId);
       if (!addon) return prev;
       if (getAddonBlockReason(addon, prev.modules)) return prev;
 
-      const nextId = prev.addonId === addonId ? null : addonId;
+      const mounted = Boolean(prev.parts[addonId]);
+      const parts = { ...prev.parts };
+      if (mounted) delete parts[addonId];
+      else parts[addonId] = true;
+
       return {
         ...prev,
-        addonId: nextId,
-        activeMediaId: nextId ?? prev.activeMediaId,
+        parts,
+        activeMediaId: mounted ? prev.activeMediaId : addonId,
       };
     });
   }
@@ -121,7 +128,7 @@ export default function ConfiguratorShell() {
                 finishId={build.finishId}
                 modules={build.modules}
                 modelSrc={modelSrc}
-                addonId={build.addonId}
+                parts={build.parts}
               />
             </div>
           </section>
