@@ -40,7 +40,7 @@ export default function ControlPanel({
   const detailAddon = getAddon(detailAddonId);
 
   return (
-    <div className="relative flex flex-col gap-3">
+    <div className="relative flex shrink-0 flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-mono text-[11px] tracking-[0.18em] text-slate-400 uppercase">
           Builder
@@ -78,13 +78,14 @@ export default function ControlPanel({
         })}
       </div>
 
-      <div className="min-h-0 rounded-lg border border-slate-700/80 bg-slate-900/40 p-3">
+      {/* Fixed tray — same box for every step so the page shell never rescales */}
+      <div className="flex h-[188px] flex-col rounded-lg border border-slate-700/80 bg-slate-900/40 p-3">
         {build.activeStep === "chassis" && (
-          <div className="space-y-3">
-            <p className="text-xs text-slate-400">
-              Elegí el color de chasis — el casco 3D se tiñe al instante.
+          <div className="flex h-full flex-col gap-2">
+            <p className="shrink-0 text-xs text-slate-400">
+              Color de chasis — tinte instantáneo en el 3D.
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid min-h-0 flex-1 grid-cols-3 gap-2">
               {CHASSIS_OPTIONS.map((option) => {
                 const active = option.id === build.chassisId;
                 return (
@@ -92,7 +93,7 @@ export default function ControlPanel({
                     key={option.id}
                     type="button"
                     onClick={() => onChassisSelect(option.id)}
-                    className={`group flex flex-col items-center gap-2 rounded-lg border px-2 py-3 transition-colors ${
+                    className={`group flex h-full flex-col items-center justify-center gap-2 rounded-lg border px-2 transition-colors ${
                       active
                         ? "border-cyan-400/70 bg-cyan-400/10"
                         : "border-slate-700/80 bg-slate-950/50 hover:border-slate-500"
@@ -135,26 +136,27 @@ export default function ControlPanel({
         )}
 
         {build.activeStep === "finish" && (
-          <div className="space-y-2">
-            <p className="text-xs text-slate-400">
-              El acabado cambia brillo y tinte (mate, naranja o metálico).
+          <div className="flex h-full flex-col gap-2">
+            <p className="shrink-0 text-xs text-slate-400">
+              Acabado: brillo y tinte sobre el chasis.
             </p>
-            <ul className="grid gap-2">
+            <ul className="grid min-h-0 flex-1 grid-cols-3 gap-2">
               {FINISH_OPTIONS.map((option) => {
                 const active = option.id === build.finishId;
                 return (
-                  <li key={option.id}>
+                  <li key={option.id} className="min-h-0">
                     <button
                       type="button"
                       onClick={() => onFinishSelect(option.id)}
-                      className={`group flex w-full items-start gap-3 rounded-lg border px-3 py-3 text-left transition-colors duration-200 ${
+                      title={option.description}
+                      className={`flex h-full w-full flex-col items-center justify-center gap-2 rounded-lg border px-2 text-center transition-colors ${
                         active
                           ? "border-cyan-400/70 bg-cyan-400/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
                           : "border-slate-700/80 bg-slate-950/50 hover:border-slate-500 hover:bg-slate-900"
                       }`}
                     >
                       <span
-                        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded border ${
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded border ${
                           active
                             ? "border-cyan-400/50 bg-cyan-400/15 text-cyan-300"
                             : "border-slate-700 bg-slate-950 text-slate-500"
@@ -166,17 +168,12 @@ export default function ControlPanel({
                           <span className="h-2 w-2 rounded-full bg-slate-600" />
                         )}
                       </span>
-                      <span className="min-w-0 flex-1">
-                        <span
-                          className={`block text-sm font-medium ${
-                            active ? "text-slate-50" : "text-slate-200"
-                          }`}
-                        >
-                          {option.label}
-                        </span>
-                        <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-slate-400">
-                          {option.description}
-                        </span>
+                      <span
+                        className={`text-[11px] leading-tight font-medium ${
+                          active ? "text-slate-50" : "text-slate-200"
+                        }`}
+                      >
+                        {option.label}
                       </span>
                     </button>
                   </li>
@@ -187,38 +184,26 @@ export default function ControlPanel({
         )}
 
         {build.activeStep === "modules" && (
-          <div className="space-y-2">
-            <p className="text-xs text-slate-400">
-              Activá sensores: glow IR / LIDAR sobre el casco.
+          <div className="flex h-full flex-col gap-2">
+            <p className="shrink-0 text-xs text-slate-400">
+              Sensores: glow IR / LIDAR sobre el casco.
             </p>
-            <ul className="grid gap-2">
+            <ul className="grid min-h-0 flex-1 grid-cols-2 gap-2">
               {MODULE_OPTIONS.map((option) => {
                 const active = build.modules[option.id];
                 return (
-                  <li key={option.id}>
+                  <li key={option.id} className="min-h-0">
                     <button
                       type="button"
                       onClick={() => onModuleToggle(option.id)}
                       aria-pressed={active}
-                      className={`flex w-full items-center gap-3 rounded-lg border px-3 py-3 text-left transition-colors duration-200 ${
+                      title={option.description}
+                      className={`flex h-full w-full flex-col items-center justify-center gap-2 rounded-lg border px-2 text-center transition-colors ${
                         active
                           ? "border-cyan-400/70 bg-cyan-400/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
                           : "border-slate-700/80 bg-slate-950/50 hover:border-slate-500 hover:bg-slate-900"
                       }`}
                     >
-                      <span className="min-w-0 flex-1">
-                        <span
-                          className={`block text-sm font-medium ${
-                            active ? "text-slate-50" : "text-slate-200"
-                          }`}
-                        >
-                          {option.label}
-                        </span>
-                        <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-slate-400">
-                          {option.description}
-                        </span>
-                      </span>
-
                       <span
                         className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
                           active
@@ -234,6 +219,13 @@ export default function ControlPanel({
                           style={{ height: 18, width: 18 }}
                         />
                       </span>
+                      <span
+                        className={`text-[11px] leading-tight font-medium ${
+                          active ? "text-slate-50" : "text-slate-200"
+                        }`}
+                      >
+                        {option.label}
+                      </span>
                     </button>
                   </li>
                 );
@@ -243,11 +235,11 @@ export default function ControlPanel({
         )}
 
         {build.activeStep === "addons" && (
-          <div>
-            <p className="mb-2 text-xs text-slate-400">
-              Montá una pieza — se ve en el 3D y dispara su video.
+          <div className="flex h-full flex-col gap-2">
+            <p className="shrink-0 text-xs text-slate-400">
+              Monta una pieza — 3D + video técnico.
             </p>
-            <ul className="grid grid-cols-3 gap-1.5">
+            <ul className="grid min-h-0 flex-1 grid-cols-3 gap-1.5">
               {ADDON_OPTIONS.map((option) => (
                 <AddonCard
                   key={option.id}
@@ -315,7 +307,7 @@ function AddonCard({
   const blocked = Boolean(blockReason);
 
   return (
-    <li className="min-w-0">
+    <li className="min-h-0 min-w-0">
       <div
         className={`flex h-full flex-col rounded-lg border transition-colors ${
           selected
@@ -330,10 +322,11 @@ function AddonCard({
           disabled={blocked}
           onClick={onSelect}
           aria-pressed={selected}
-          className="flex min-h-0 flex-1 flex-col items-center gap-1.5 px-2 py-2.5 text-center disabled:cursor-not-allowed"
+          title={blocked ? (blockReason ?? undefined) : option.description}
+          className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 px-1.5 py-1.5 text-center disabled:cursor-not-allowed"
         >
           <span
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded border ${
+            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border ${
               selected
                 ? "border-cyan-400/50 bg-cyan-400/15 text-cyan-300"
                 : "border-slate-700 bg-slate-950 text-slate-500"
@@ -355,16 +348,11 @@ function AddonCard({
           <span className="rounded border border-slate-600/80 px-1 py-0.5 font-mono text-[8px] tracking-wider text-slate-500 uppercase">
             {option.slot}
           </span>
-          {blocked && (
-            <span className="line-clamp-2 text-[9px] leading-tight text-amber-300/90">
-              {blockReason}
-            </span>
-          )}
         </button>
         <button
           type="button"
           onClick={onDetail}
-          className="inline-flex items-center justify-center gap-1 border-t border-slate-800/80 px-1.5 py-1.5 font-mono text-[9px] tracking-wide text-slate-500 uppercase transition-colors hover:bg-slate-800 hover:text-cyan-300"
+          className="inline-flex shrink-0 items-center justify-center gap-1 border-t border-slate-800/80 px-1.5 py-1 font-mono text-[9px] tracking-wide text-slate-500 uppercase transition-colors hover:bg-slate-800 hover:text-cyan-300"
         >
           <Info className="h-3 w-3" strokeWidth={2} />
           Detalle

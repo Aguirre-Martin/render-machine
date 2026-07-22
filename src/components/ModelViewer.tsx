@@ -71,7 +71,7 @@ function isWebGLAvailable(): boolean {
 
 function WebGLFallback() {
   return (
-    <div className="relative flex h-full min-h-[420px] w-full flex-col items-center justify-center overflow-hidden rounded-lg border border-amber-500/40 bg-slate-950 px-6 text-center">
+    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg border border-amber-500/40 bg-slate-950 px-6 text-center">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(245,158,11,0.08)_0%,_transparent_65%)]" />
       <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300">
         <MonitorOff className="h-5 w-5" strokeWidth={1.75} />
@@ -84,7 +84,7 @@ function WebGLFallback() {
       </h3>
       <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-400">
         Este entorno (p. ej. Simple Browser de Cursor o GPU deshabilitada) no
-        puede crear un contexto WebGL. Abrí la demo en Chrome/Firefox normal con
+        puede crear un contexto WebGL. Abre la demo en Chrome/Firefox normal con
         hardware acceleration activo.
       </p>
       <a
@@ -252,7 +252,7 @@ export default function ModelViewer({
 
   if (status === "checking") {
     return (
-      <div className="flex h-full min-h-[420px] w-full items-center justify-center rounded-lg border border-slate-700/80 bg-slate-950">
+      <div className="flex h-full w-full items-center justify-center rounded-lg border border-slate-700/80 bg-slate-950">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-cyan-400" />
           <p className="font-mono text-xs tracking-widest text-slate-400 uppercase">
@@ -268,7 +268,7 @@ export default function ModelViewer({
   }
 
   return (
-    <div className="relative h-full min-h-[420px] w-full overflow-hidden rounded-lg border border-slate-700/80 bg-slate-950">
+    <div className="relative h-full w-full overflow-hidden rounded-lg border border-slate-700/80 bg-slate-950">
       <div
         className={`pointer-events-none absolute inset-0 transition-opacity duration-500 ${
           modules.thermalVision
@@ -301,7 +301,6 @@ export default function ModelViewer({
         style={{
           width: "100%",
           height: "100%",
-          minHeight: "420px",
           backgroundColor: "transparent",
         }}
       />
