@@ -191,6 +191,7 @@ export default function ControlPanel({
             <ul className="grid min-h-0 flex-1 grid-cols-2 gap-2">
               {MODULE_OPTIONS.map((option) => {
                 const active = build.modules[option.id];
+                const isThermal = option.id === "thermalVision";
                 return (
                   <li key={option.id} className="min-h-0">
                     <button
@@ -200,14 +201,18 @@ export default function ControlPanel({
                       title={option.description}
                       className={`flex h-full w-full flex-col items-center justify-center gap-2 rounded-lg border px-2 text-center transition-colors ${
                         active
-                          ? "border-cyan-400/70 bg-cyan-400/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
+                          ? isThermal
+                            ? "border-rose-400/70 bg-rose-500/15 shadow-[inset_0_0_0_1px_rgba(244,63,94,0.3)]"
+                            : "border-cyan-400/70 bg-cyan-400/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
                           : "border-slate-700/80 bg-slate-950/50 hover:border-slate-500 hover:bg-slate-900"
                       }`}
                     >
                       <span
                         className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
                           active
-                            ? "border-cyan-400/60 bg-cyan-400/30"
+                            ? isThermal
+                              ? "border-rose-400/60 bg-rose-400/35"
+                              : "border-cyan-400/60 bg-cyan-400/30"
                             : "border-slate-600 bg-slate-800"
                         }`}
                         aria-hidden
@@ -221,7 +226,11 @@ export default function ControlPanel({
                       </span>
                       <span
                         className={`text-[11px] leading-tight font-medium ${
-                          active ? "text-slate-50" : "text-slate-200"
+                          active
+                            ? isThermal
+                              ? "text-rose-100"
+                              : "text-cyan-100"
+                            : "text-slate-200"
                         }`}
                       >
                         {option.label}
@@ -475,7 +484,7 @@ function AddonDetailDrawer({
             )}
 
             <p className="font-mono text-[10px] tracking-wide text-slate-400 uppercase">
-              Spec sheet · mesh 3D pendiente
+              Spec sheet técnico
             </p>
           </div>
         </div>

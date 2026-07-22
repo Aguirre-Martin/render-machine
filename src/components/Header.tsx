@@ -15,7 +15,7 @@ export default function Header() {
               Industrial Configurator Pro
             </p>
             <p className="truncate font-mono text-[10px] tracking-[0.16em] text-slate-500 uppercase">
-              Demo Showroom
+              Configurador industrial
             </p>
           </div>
         </div>
