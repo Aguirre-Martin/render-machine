@@ -139,21 +139,23 @@ export const CHASSIS_OPTIONS: ChassisOption[] = [
 
 export const FINISH_OPTIONS: FinishOption[] = [
   {
+    // IDs kept stable; labels describe what DamagedHelmet actually shows
     id: "tornilleria-negra",
-    label: "Tornillería Negra",
-    description: "Kit de fijaciones negras mate para entornos de bajo contraste visual.",
+    label: "Mate Oscuro",
+    description:
+      "Baja el brillo (roughness alto) y oscurece un poco la superficie. En este demo el casco tiene un solo material.",
     videoUrl: V.valvulas,
-    // Surface only: keep chassis color dominant, slight charcoal wash + matte
     metallic: 0.12,
     roughness: 0.92,
     tint: [0.12, 0.12, 0.14],
-    tintStrength: 0.18,
+    tintStrength: 0.28,
     emissive: [0, 0, 0],
   },
   {
     id: "naranja-hi-vis",
-    label: "Naranja Hi-Vis",
-    description: "Acabado de alta visibilidad para zonas de obra y seguridad operacional.",
+    label: "Tintado Naranja",
+    description:
+      "Aplica un wash naranja hi-vis sobre el color de chasis y un leve glow. Se nota al instante en el 3D.",
     videoUrl: V.motor,
     metallic: 0.22,
     roughness: 0.42,
@@ -163,8 +165,9 @@ export const FINISH_OPTIONS: FinishOption[] = [
   },
   {
     id: "plata",
-    label: "Plata",
-    description: "Kit metálico satinado para showroom y presentación comercial.",
+    label: "Metálico Satinado",
+    description:
+      "Sube el metallic y baja roughness: la superficie se ve más cromada / plateada sobre el chasis.",
     videoUrl: V.sensores,
     metallic: 0.95,
     roughness: 0.16,
@@ -281,7 +284,7 @@ export function computeBuildPrice(build: BuildConfig): number {
 export function formatBuildSummary(build: BuildConfig): string {
   const chassis = getChassis(build.chassisId);
   const finish = getFinish(build.finishId);
-  const parts = [`Chasis ${chassis.label}`, `Kit ${finish.label}`];
+  const parts = [`Chasis ${chassis.label}`, `Acabado ${finish.label}`];
 
   if (build.modules.thermalVision) parts.push("Visión Térmica Activa");
   if (build.modules.lidar) parts.push("LIDAR Activo");
@@ -294,7 +297,7 @@ export type BomLine = { label: string; price: number };
 export function buildBomLines(build: BuildConfig): BomLine[] {
   const lines: BomLine[] = [
     { label: `Chasis — ${getChassis(build.chassisId).label}`, price: BASE_PRICE },
-    { label: `Kit — ${getFinish(build.finishId).label}`, price: 0 },
+    { label: `Acabado — ${getFinish(build.finishId).label}`, price: 0 },
   ];
 
   for (const mod of MODULE_OPTIONS) {

@@ -3,6 +3,12 @@
 MVP comercial de un configurador web interactivo de maquinaria industrial.
 Next.js (App Router) + TypeScript + Tailwind + `@google/model-viewer`.
 
+## Agent / product context
+
+- Living notes: [`docs/CONTEXT.md`](docs/CONTEXT.md)
+- UX reference (Volvo Truck Builder — flow only):  
+  https://www.volvotrucks.es/es-es/tools/truck-builder.html#/es-es/configurator/fh16aero
+
 ## Setup
 
 ```bash
@@ -19,6 +25,7 @@ npx vercel
 ```
 
 O conectá el repo en el dashboard de Vercel. Build command: `next build`.
+Push a `main` dispara producción si el repo está linkeado.
 
 ## Stack
 
@@ -32,11 +39,13 @@ O conectá el repo en el dashboard de Vercel. Build command: `next build`.
 src/
   app/                  # layout + page
   components/
-    ConfiguratorShell   # estado principal
+    ConfiguratorShell   # BuildConfig (source of truth)
     ModelViewerClient   # dynamic SSR-off wrapper
-    ModelViewer         # web component
+    ModelViewer         # live materials
     VideoPlayer         # fade + autoplay
-    ControlPanel        # selección de módulos
+    ControlPanel        # builder steps
     Header / QuoteCta
   data/mockData.ts
+docs/
+  CONTEXT.md            # agent + product context
 ```

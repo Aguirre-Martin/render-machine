@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   getChassis,
   getFinish,
+  MODULE_OPTIONS,
   MODEL_SRC,
   type BuildModules,
 } from "@/data/mockData";
@@ -262,6 +263,29 @@ export default function ModelViewer({
           backgroundColor: "transparent",
         }}
       />
+
+      {/* Active module tags — overlay top-left (not model hotspots) */}
+      {modulesActive && (
+        <div className="pointer-events-none absolute top-3 left-3 z-10 flex max-w-[min(100%,16rem)] flex-col gap-1.5">
+          {MODULE_OPTIONS.filter((mod) => modules[mod.id]).map((mod) => (
+            <span
+              key={mod.id}
+              className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 font-mono text-[10px] tracking-wider uppercase backdrop-blur-sm ${
+                mod.id === "thermalVision"
+                  ? "border-orange-400/50 bg-orange-500/15 text-orange-200"
+                  : "border-cyan-400/50 bg-cyan-400/15 text-cyan-200"
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                  mod.id === "thermalVision" ? "bg-orange-400" : "bg-cyan-400"
+                }`}
+              />
+              {mod.label} · Activo
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="pointer-events-none absolute right-3 bottom-3 left-3 flex items-center justify-between">
         <span className="rounded border border-slate-600/80 bg-slate-900/80 px-2 py-1 font-mono text-[10px] tracking-wider text-slate-300 uppercase backdrop-blur-sm">
