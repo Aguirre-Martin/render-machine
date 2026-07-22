@@ -20,12 +20,12 @@ export default function QuoteCta({
   return (
     <>
       <footer className="sticky bottom-0 z-40 border-t border-slate-800/90 bg-slate-950/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <div className="min-w-0">
             <p className="font-mono text-[10px] tracking-[0.16em] text-slate-500 uppercase">
               Configuración
             </p>
-            <p className="truncate text-sm font-medium text-slate-100">
+            <p className="truncate text-sm font-medium text-cyan-300">
               {summary}
             </p>
           </div>
