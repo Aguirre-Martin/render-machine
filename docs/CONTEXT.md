@@ -12,7 +12,7 @@ https://www.volvotrucks.es/es-es/tools/truck-builder.html#/es-es/configurator/fh
 **Take the flow, not the white Volvo skin.** Our skin stays dark industrial (slate/cyan).
 
 Patterns to mirror:
-- Step wizard (Chasis → Acabado → Módulos → future Agregados)
+- Step wizard (Chasis → Acabado → Módulos → Agregados)
 - Hero product (3D) + side preview (video)
 - Tray of selectable cards with clear selected state (check / cyan border)
 - Volver / Siguiente
@@ -40,20 +40,21 @@ BuildConfig {
   chassisId    → helmet base color (materials[0])
   finishId     → metallic / roughness / light tint (chassis stays dominant)
   modules      → thermalVision / lidar → emissive glow (no hotspot labels)
-  activeStep   → chassis | finish | modules
+  addonId      → max 1 geometry addon (null = none)
+  activeStep   → chassis | finish | modules | addons
   activeMediaId → which video is shown
 }
 ```
 
 DamagedHelmet = single material demo stand-in. Clear albedo texture, tint `materials[0]`. Never reload `.glb` on every click for color/finish.
 
-## Future: Agregados (addons)
+## Agregados (Paso 4)
 
-Like a trailer on a truck — **geometry**, not another tint.
-- Best MVP path with few adds: prebaked GLB variants or one GLB with show/hide nodes
-- Real composition (separate meshes + slots) → later R3F / Three scene
-- UX: wizard step or drawer (“otra ventana” inside the builder), not a new route required
-- Blocked on client assets with named slots (`slot_*`, `addon_*`)
+Geometry addons (rail / pod IR / antenna) — **not** another tint, and **not** swapping the whole hero model for a random GLB.
+- UI: wizard step + cards + in-panel detail drawer
+- Rules: max 1 addon; e.g. LIDAR blocks Antena X
+- Today: selection updates video / summary / BOM; 3D hero stays DamagedHelmet
+- Real 3D attach later: client GLB with slots, prebaked casco+add, or R3F composition
 
 ## Key files
 

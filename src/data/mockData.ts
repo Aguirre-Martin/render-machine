@@ -40,17 +40,44 @@ export type ModuleOption = {
   videoUrl: string;
 };
 
-export type BuildStep = "chassis" | "finish" | "modules";
-
 export type BuildModules = {
   thermalVision: boolean;
   lidar: boolean;
 };
 
+export type AddonSlot = "rail_L" | "visor" | "antenna";
+
+export type AddonOption = {
+  id: string;
+  label: string;
+  description: string;
+  slot: AddonSlot;
+  videoUrl: string;
+  /** Human-readable compatibility chips */
+  compatibleWith: string[];
+  detailBullets: string[];
+  /**
+   * Optional prebaked GLB for this addon combo (mock stand-in until client assets).
+   * When set, model-viewer swaps src and reapplies chassis/finish/module materials.
+   */
+  modelSrc?: string;
+  /** model-viewer hotspot fallback if modelSrc is missing */
+  hotspot?: {
+    position: string;
+    normal: string;
+  };
+  /** Module keys that block selecting this addon */
+  blockedByModules?: Array<keyof BuildModules>;
+};
+
+export type BuildStep = "chassis" | "finish" | "modules" | "addons";
+
 export type BuildConfig = {
   chassisId: string;
   finishId: string;
   modules: BuildModules;
+  /** Max one addon at a time (one slot occupancy for MVP) */
+  addonId: string | null;
   activeStep: BuildStep;
   /** Which option's video is currently shown */
   activeMediaId: string;
@@ -194,16 +221,69 @@ export const MODULE_OPTIONS: ModuleOption[] = [
   },
 ];
 
+/**
+ * Geometry addons (Paso 4). Selection updates state / video / summary.
+ * 3D stays on the base helmet — do NOT swap the whole model for a random GLB.
+ * Real attach geometry needs client assets (prebaked combo, show/hide nodes, or R3F).
+ */
+export const ADDON_OPTIONS: AddonOption[] = [
+  {
+    id: "rail-lateral",
+    label: "Rail Lateral",
+    description:
+      "Riel de montaje lateral para accesorios y sensores auxiliares.",
+    slot: "rail_L",
+    videoUrl: V.valvulas,
+    compatibleWith: ["Chasis estándar", "Kit mate / metálico"],
+    detailBullets: [
+      "Anclaje slot_rail_L — pivot en el punto de montaje",
+      "Soporta clamp M4 / payload liviano",
+      "Geometría 3D pendiente de asset del cliente",
+    ],
+  },
+  {
+    id: "pod-ir",
+    label: "Pod IR",
+    description:
+      "Cápsula térmica frontal para visión IR de campo cercano.",
+    slot: "visor",
+    videoUrl: V.refrigeracion,
+    compatibleWith: ["Visión Térmica", "Chasis estándar"],
+    detailBullets: [
+      "Anclaje slot_visor — mesh addon_thermal_pod",
+      "FOV corto / disipación pasiva",
+      "Geometría 3D pendiente de asset del cliente",
+    ],
+  },
+  {
+    id: "antena-x",
+    label: "Antena X",
+    description:
+      "Antena de telemetría — incompatible con LIDAR activo en este MVP.",
+    slot: "antenna",
+    videoUrl: V.sensores,
+    compatibleWith: ["Sin LIDAR"],
+    blockedByModules: ["lidar"],
+    detailBullets: [
+      "Montaje techo / antenna mast",
+      "Bloqueada si LIDAR está activo (regla demo)",
+      "Geometría 3D pendiente de asset del cliente",
+    ],
+  },
+];
+
 export const BUILD_STEPS: { id: BuildStep; label: string }[] = [
   { id: "chassis", label: "Chasis" },
   { id: "finish", label: "Acabado" },
   { id: "modules", label: "Módulos" },
+  { id: "addons", label: "Agregados" },
 ];
 
 export const DEFAULT_BUILD: BuildConfig = {
   chassisId: CHASSIS_OPTIONS[0].id,
   finishId: FINISH_OPTIONS[0].id,
   modules: { thermalVision: false, lidar: false },
+  addonId: null,
   activeStep: "chassis",
   activeMediaId: CHASSIS_OPTIONS[0].id,
 };
@@ -226,6 +306,31 @@ export function getFinish(id: string): FinishOption {
 
 export function getModule(id: keyof BuildModules): ModuleOption {
   return MODULE_OPTIONS.find((o) => o.id === id) ?? MODULE_OPTIONS[0];
+}
+
+export function getAddon(id: string | null): AddonOption | null {
+  if (!id) return null;
+  return ADDON_OPTIONS.find((o) => o.id === id) ?? null;
+}
+
+/** Why an addon cannot be selected with the current modules (or null if ok). */
+export function getAddonBlockReason(
+  addon: AddonOption,
+  modules: BuildModules,
+): string | null {
+  for (const key of addon.blockedByModules ?? []) {
+    if (modules[key]) {
+      const mod = getModule(key);
+      return `Incompatible con ${mod.label} activo`;
+    }
+  }
+  return null;
+}
+
+/** GLB src for the viewer — base helmet unless the active addon ships modelSrc. */
+export function resolveModelSrc(build: BuildConfig): string {
+  const addon = getAddon(build.addonId);
+  return addon?.modelSrc ?? MODEL_SRC;
 }
 
 /** Resolve which video/title to show from activeMediaId. */
@@ -263,6 +368,17 @@ export function resolveActiveMedia(build: BuildConfig): ActiveMedia {
     };
   }
 
+  const addon = ADDON_OPTIONS.find((o) => o.id === build.activeMediaId);
+  if (addon) {
+    return {
+      id: addon.id,
+      title: addon.label,
+      description: addon.description,
+      videoUrl: addon.videoUrl,
+      tag: "Agregado",
+    };
+  }
+
   return {
     id: chassis.id,
     title: chassis.label,
@@ -289,6 +405,9 @@ export function formatBuildSummary(build: BuildConfig): string {
   if (build.modules.thermalVision) parts.push("Visión Térmica Activa");
   if (build.modules.lidar) parts.push("LIDAR Activo");
 
+  const addon = getAddon(build.addonId);
+  if (addon) parts.push(`+ ${addon.label}`);
+
   return parts.join(" | ");
 }
 
@@ -304,6 +423,11 @@ export function buildBomLines(build: BuildConfig): BomLine[] {
     if (build.modules[mod.id]) {
       lines.push({ label: mod.label, price: mod.price });
     }
+  }
+
+  const addon = getAddon(build.addonId);
+  if (addon) {
+    lines.push({ label: `Agregado — ${addon.label}`, price: 0 });
   }
 
   return lines;

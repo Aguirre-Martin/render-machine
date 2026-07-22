@@ -5,7 +5,10 @@ import {
   DEFAULT_BUILD,
   buildBomLines,
   formatBuildSummary,
+  getAddon,
+  getAddonBlockReason,
   resolveActiveMedia,
+  resolveModelSrc,
   type BuildConfig,
   type BuildModules,
   type BuildStep,
@@ -26,6 +29,7 @@ export default function ConfiguratorShell() {
     () => buildBomLines(build).map((line) => line.label),
     [build],
   );
+  const modelSrc = useMemo(() => resolveModelSrc(build), [build]);
 
   function setStep(activeStep: BuildStep) {
     setBuild((prev) => ({ ...prev, activeStep }));
@@ -50,11 +54,39 @@ export default function ConfiguratorShell() {
   function toggleModule(id: keyof BuildModules) {
     setBuild((prev) => {
       const nextValue = !prev.modules[id];
+      const nextModules = { ...prev.modules, [id]: nextValue };
+
+      // Drop addon if the newly enabled module blocks it
+      let addonId = prev.addonId;
+      if (nextValue && addonId) {
+        const addon = getAddon(addonId);
+        if (addon && getAddonBlockReason(addon, nextModules)) {
+          addonId = null;
+        }
+      }
+
       return {
         ...prev,
-        modules: { ...prev.modules, [id]: nextValue },
+        modules: nextModules,
+        addonId,
         // Preview the module video when enabling; keep current media when disabling
         activeMediaId: nextValue ? id : prev.activeMediaId,
+      };
+    });
+  }
+
+  /** Toggle addon selection — max one; click again to clear. */
+  function selectAddon(addonId: string) {
+    setBuild((prev) => {
+      const addon = getAddon(addonId);
+      if (!addon) return prev;
+      if (getAddonBlockReason(addon, prev.modules)) return prev;
+
+      const nextId = prev.addonId === addonId ? null : addonId;
+      return {
+        ...prev,
+        addonId: nextId,
+        activeMediaId: nextId ?? prev.activeMediaId,
       };
     });
   }
@@ -88,6 +120,8 @@ export default function ConfiguratorShell() {
                 chassisId={build.chassisId}
                 finishId={build.finishId}
                 modules={build.modules}
+                modelSrc={modelSrc}
+                addonId={build.addonId}
               />
             </div>
           </section>
@@ -100,6 +134,7 @@ export default function ConfiguratorShell() {
               onChassisSelect={selectChassis}
               onFinishSelect={selectFinish}
               onModuleToggle={toggleModule}
+              onAddonSelect={selectAddon}
             />
           </section>
         </div>
