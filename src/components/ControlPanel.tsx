@@ -128,7 +128,7 @@ export default function ControlPanel({
         {build.activeStep === "finish" && (
           <div className="space-y-2">
             <p className="text-xs text-slate-400">
-              El acabado cambia mate / hi-vis / cromo sin tapar el color de chasis.
+              El acabado cambia brillo y tinte (mate, naranja o metálico).
             </p>
           <ul className="grid gap-2">
             {FINISH_OPTIONS.map((option) => {
